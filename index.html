@@ -352,6 +352,7 @@ footer { background: var(--navy); color: rgba(255,255,255,0.6); padding: 48px 5%
         </div>
         <div class="form-group"><label>Your City</label><input type="text" id="city" placeholder="e.g. Surrey, Langley…" required></div>
         <div class="form-group"><label>Details / Notes</label><textarea id="details" placeholder="Tell us about the furniture, number of items, any special requirements…" required></textarea></div>
+        <div class="form-group"><label for="photo">Upload Photo (Optional)</label><input type="file" id="photo" name="photo" accept="image/*"></div>
         <button type="submit" class="form-submit" id="submitBtn">Send Request →</button>
         <div id="formMessage" style="margin-top: 12px; padding: 12px; border-radius: 8px; display: none; text-align: center; font-weight: 500;"></div>
       </form>
@@ -406,22 +407,23 @@ document.getElementById('quoteForm').addEventListener('submit', async function(e
   submitBtn.textContent = 'Sending...';
   
   try {
-    const formData = {
-      firstName: document.getElementById('firstName').value,
-      lastName: document.getElementById('lastName').value,
-      phone: document.getElementById('phone').value,
-      email: document.getElementById('email').value,
-      service: document.getElementById('service').value,
-      city: document.getElementById('city').value,
-      details: document.getElementById('details').value
-    };
+    const formData = new FormData();
+    formData.append('firstName', document.getElementById('firstName').value);
+    formData.append('lastName', document.getElementById('lastName').value);
+    formData.append('phone', document.getElementById('phone').value);
+    formData.append('email', document.getElementById('email').value);
+    formData.append('service', document.getElementById('service').value);
+    formData.append('city', document.getElementById('city').value);
+    formData.append('details', document.getElementById('details').value);
+    
+    const photoInput = document.getElementById('photo');
+    if (photoInput.files.length > 0) {
+      formData.append('photo', photoInput.files[0]);
+    }
     
     const response = await fetch(SCRIPT_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(formData)
+      body: formData
     });
     
     const result = await response.json();
