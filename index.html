@@ -328,35 +328,143 @@ footer { background: var(--navy); color: rgba(255,255,255,0.6); padding: 48px 5%
     </div>
     <div class="contact-form">
       <h3>Request a Free Quote</h3>
-      <form id="quoteForm">
+      <div id="form-success" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;padding:16px 20px;border-radius:10px;margin-bottom:20px;font-weight:500;">
+        ✅ Thanks! We received your request and will be in touch within a few hours.
+      </div>
+      <div id="form-error" style="display:none;background:#f8d7da;border:1px solid #f5c6cb;color:#721c24;padding:16px 20px;border-radius:10px;margin-bottom:20px;font-weight:500;">
+        ❌ Something went wrong. Please try again or contact us directly by phone.
+      </div>
+      <div id="quote-form">
         <div class="form-row">
-          <div class="form-group"><label>First Name</label><input type="text" id="firstName" placeholder="John" required></div>
-          <div class="form-group"><label>Last Name</label><input type="text" id="lastName" placeholder="Smith" required></div>
+          <div class="form-group"><label>First Name</label><input type="text" name="first_name" placeholder="John" required></div>
+          <div class="form-group"><label>Last Name</label><input type="text" name="last_name" placeholder="Smith" required></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Phone</label><input type="tel" id="phone" placeholder="(604) 000-0000" required></div>
-          <div class="form-group"><label>Email</label><input type="email" id="email" placeholder="john@email.com" required></div>
+          <div class="form-group"><label>Phone</label><input type="tel" name="phone" placeholder="(604) 000-0000"></div>
+          <div class="form-group"><label>Email</label><input type="email" name="email" placeholder="john@email.com" required></div>
         </div>
         <div class="form-group"><label>Service Needed</label>
-          <select id="service" required>
-            <option value="">Select a service…</option>
+          <select name="service">
+            <option value="">Select a service&hellip;</option>
             <option>IKEA Furniture Assembly</option>
             <option>Sofa / Couch Assembly</option>
             <option>Bed Frame Assembly</option>
             <option>Kitchen Cabinet Installation</option>
             <option>TV / Picture Mounting</option>
-            <option>Tables & Desks</option>
-            <option>Storage & Shelving</option>
+            <option>Tables &amp; Desks</option>
+            <option>Storage &amp; Shelving</option>
             <option>Other</option>
           </select>
         </div>
-        <div class="form-group"><label>Your City</label><input type="text" id="city" placeholder="e.g. Surrey, Langley…" required></div>
-        <div class="form-group"><label>Details / Notes</label><textarea id="details" placeholder="Tell us about the furniture, number of items, any special requirements…" required></textarea></div>
-        <div class="form-group"><label for="photo">Upload Photo (Optional)</label><input type="file" id="photo" name="photo" accept="image/*"></div>
-        <button type="submit" class="form-submit" id="submitBtn">Send Request →</button>
-        <div id="formMessage" style="margin-top: 12px; padding: 12px; border-radius: 8px; display: none; text-align: center; font-weight: 500;"></div>
-      </form>
+        <div class="form-group"><label>Your City</label><input type="text" name="city" placeholder="e.g. Surrey, Langley&hellip;"></div>
+        <div class="form-group"><label>Details / Notes</label><textarea name="details" placeholder="Tell us about the furniture, number of items, any special requirements&hellip;"></textarea></div>
+
+        <div class="form-group">
+          <label>Upload Photo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#aaa;">(Optional)</span></label>
+          <div id="photo-drop" onclick="document.getElementById('photo-input').click()" style="border:2px dashed var(--border);border-radius:12px;padding:28px 20px;text-align:center;cursor:pointer;background:var(--cream);transition:border-color 0.2s,background 0.2s;">
+            <div id="photo-preview" style="display:none;margin-bottom:12px;">
+              <img id="preview-img" style="max-height:160px;border-radius:8px;object-fit:contain;" />
+            </div>
+            <div id="photo-placeholder">
+              <div style="font-size:2rem;margin-bottom:8px;">&#128247;</div>
+              <div style="font-size:0.92rem;font-weight:600;color:var(--navy);margin-bottom:4px;">Click to add a photo of your furniture</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);">JPG, PNG &mdash; helps us give you a better quote</div>
+            </div>
+            <input id="photo-input" type="file" accept="image/jpeg,image/png" style="display:none;" onchange="handlePhotoSelect(this)">
+          </div>
+          <div id="photo-name" style="font-size:0.8rem;color:var(--text-muted);margin-top:6px;display:none;"></div>
+        </div>
+
+        <button class="form-submit" id="submit-btn" type="button" onclick="submitQuoteForm()">Send Request &#8594;</button>
+      </div>
     </div>
+
+    <script>
+      function handlePhotoSelect(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const nameEl = document.getElementById('photo-name');
+        const preview = document.getElementById('photo-preview');
+        const placeholder = document.getElementById('photo-placeholder');
+        const previewImg = document.getElementById('preview-img');
+        const drop = document.getElementById('photo-drop');
+
+        nameEl.textContent = '📎 ' + file.name;
+        nameEl.style.display = 'block';
+        drop.style.borderColor = 'var(--gold)';
+        drop.style.background = '#fffaf3';
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previewImg.src = e.target.result;
+          preview.style.display = 'block';
+          placeholder.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+      }
+
+      async function submitQuoteForm() {
+        const btn = document.getElementById('submit-btn');
+        const form = document.getElementById('quote-form');
+        const successMsg = document.getElementById('form-success');
+        const errorMsg = document.getElementById('form-error');
+
+        // Gather field values
+        // Get photo as base64 if provided
+        const photoInput = document.getElementById('photo-input');
+        let photoBase64 = '';
+        if (photoInput.files[0]) {
+          photoBase64 = await new Promise((resolve) => {
+            const r = new FileReader();
+            r.onload = (e) => resolve(e.target.result);
+            r.readAsDataURL(photoInput.files[0]);
+          });
+        }
+
+        const data = {
+          first_name: form.querySelector('[name="first_name"]').value.trim(),
+          last_name:  form.querySelector('[name="last_name"]').value.trim(),
+          phone:      form.querySelector('[name="phone"]').value.trim(),
+          email:      form.querySelector('[name="email"]').value.trim(),
+          service:    form.querySelector('[name="service"]').value,
+          city:       form.querySelector('[name="city"]').value.trim(),
+          details:    form.querySelector('[name="details"]').value.trim(),
+          photo:      photoBase64 || 'No photo provided',
+        };
+
+        // Basic validation
+        if (!data.first_name || !data.email) {
+          alert('Please fill in at least your first name and email.');
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Sending…';
+        successMsg.style.display = 'none';
+        errorMsg.style.display = 'none';
+
+        try {
+          const res = await fetch('https://script.google.com/macros/s/AKfycbw51B1RbBmLPtpnr5If36rQu32pFjFUixDpWEjBpJf5Ofzudo8i_Q9ZPsMzMVLiEX-4/exec', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+
+          const json = await res.json();
+          if (res.ok && json.result === 'success') {
+            successMsg.style.display = 'block';
+            form.querySelectorAll('input, select, textarea').forEach(el => el.value = '');
+          } else {
+            errorMsg.style.display = 'block';
+          }
+        } catch (e) {
+          errorMsg.style.display = 'block';
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = 'Send Request &#8594;';
+      }
+    </script>
   </div>
 </section>
 
@@ -389,74 +497,4 @@ footer { background: var(--navy); color: rgba(255,255,255,0.6); padding: 48px 5%
     </div>
   </div>
   <div class="footer-bottom">
-    <span>&copy; 2025 HandySquad Services. All rights reserved. Surrey, BC.</span>
-    <span style="color:rgba(255,255,255,0.3);">Furniture Assembly &middot; Handyman &middot; Lower Mainland BC</span>
-  </div>
-</footer>
-
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxF8Yn0RgU4fkqxEdr9pQbwMUPuzZ-8noLvKdSIqNCjcMQoNYa0Uq5jzCYflaunUm68/exec";
-
-document.getElementById('quoteForm').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  
-  const submitBtn = document.getElementById('submitBtn');
-  const formMessage = document.getElementById('formMessage');
-  
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Sending...';
-  
-  try {
-    const formData = new FormData();
-    formData.append('firstName', document.getElementById('firstName').value);
-    formData.append('lastName', document.getElementById('lastName').value);
-    formData.append('phone', document.getElementById('phone').value);
-    formData.append('email', document.getElementById('email').value);
-    formData.append('service', document.getElementById('service').value);
-    formData.append('city', document.getElementById('city').value);
-    formData.append('details', document.getElementById('details').value);
-    
-    const photoInput = document.getElementById('photo');
-    if (photoInput.files.length > 0) {
-      formData.append('photo', photoInput.files[0]);
-    }
-    
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: formData
-    });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      formMessage.textContent = '✓ Quote request sent! We\'ll be in touch within a few hours.';
-      formMessage.style.background = '#d4edda';
-      formMessage.style.color = '#155724';
-      formMessage.style.border = '1px solid #c3e6cb';
-      formMessage.style.display = 'block';
-      
-      document.getElementById('quoteForm').reset();
-      
-      setTimeout(() => {
-        formMessage.style.display = 'none';
-      }, 5000);
-    } else {
-      throw new Error(result.error || 'Submission failed');
-    }
-    
-  } catch (error) {
-    formMessage.textContent = '❌ Error sending request. Please try again or call us directly.';
-    formMessage.style.background = '#f8d7da';
-    formMessage.style.color = '#721c24';
-    formMessage.style.border = '1px solid #f5c6cb';
-    formMessage.style.display = 'block';
-    console.error('Error:', error);
-  }
-  
-  submitBtn.disabled = false;
-  submitBtn.textContent = 'Send Request →';
-});
-</script>
-
-</body>
-</html>
+    <span>&copy; 2025 HandySqua
